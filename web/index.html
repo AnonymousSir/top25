@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <title>top25</title>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width,user-scalable=no,initial-scale=1.0,initial-scale=1.0,maximum-scale=1.0">
+    <link href="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/3.4.1/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        img{
+            width: 60px;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="app">
+        <h1>top250</h1>
+        <a href="add.html">添加</a>
+        <table class="table table-bordered table-hover">
+          <thead>
+            <tr>
+              <th>编号</th>
+              <th>名字</th>
+              <th>海报</th>
+              <th>评分</th>
+              <th>收藏</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="item in list">
+                <td>{{item._id}}</td>
+                <td>
+                    <a @click="handleDetail(item._id)" href="javascript:void(0)">{{item.title}}</a>
+                </td>
+                <td>
+                    <img :src="item.pic" :alt="item.title" :title="item.slogo" >
+                </td>
+                <td>{{item.rating}}</td>
+                <td>
+                    <img @click="handleCollected(item._id)" :src="item.collected ? './images/collect.png' : './images/cancel.png'" alt="">
+                </td>
+                <td>
+                    <button @click="handleDelete(item._id)" type="button" class="btn btn-danger">删除</button>
+                </td>
+            </tr>
+          </tbody>
+        </table>
+                
+        <nav aria-label="Page navigation" class="text-center">
+            <ul class="pagination pagination-lg">
+              <li>
+                <a href="javascript:void(0)" aria-label="Previous">
+                  <span aria-hidden="true">&laquo;</span>
+                </a>
+              </li>
+              <li v-for="item in pages"><a @click="handlePages(item)" href="javascript:void(0)">{{item}}</a></li>
+              <li>
+                <a href="javascript:void(0)" aria-label="Next">
+                  <span aria-hidden="true">&raquo;</span>
+                </a>
+              </li>
+            </ul>
+          </nav>
+    </div>
+
+    
+
+<script src="https://cdn.bootcdn.net/ajax/libs/vue/2.6.14/vue.js"></script>
+<script src="https://cdn.bootcdn.net/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+<script type="text/javascript">
+const host = 'http://localhost:8080'
+new Vue({
+    el: '#app',
+    data: {
+        list: [],
+        total: 0,
+        index: 1
+    },
+    created(){
+        this.getData()
+    },
+    computed: {
+        pages(){
+            let arr = []
+            for (let i = 0;i < this.total; i+=5) {
+                arr.push(i)
+            }
+            return arr.map(i => (i+5)/5)
+        }
+    },
+    methods: {
+        // 获取数据
+        async getData (start=0, limit=5){
+            await $.ajax({
+                url: `${host}/top25?start=${start}&limit=${limit}`,
+                success: res => {
+                    this.list = res.res,
+                    this.total = res.total
+                }
+            })
+        },
+        // 收藏
+        async handleCollected(id) {
+            const item = this.list.find(i => i._id == id)
+            await $.ajax({
+                url: `${host}/collected`,
+                data: {id},
+                type: 'post',
+                success: res => {
+                    item.collected = !item.collected
+                }
+            })
+        },
+        // 删除
+        async handleDelete(id) {
+            await $.ajax({
+                url: `${host}/delete`,
+                data: {id},
+                type: 'post'
+            })
+            this.getData()
+            this.handlePages(this.index)
+        },
+        // 分页
+        async handlePages(item) {
+            let start = (item-1) * 5
+            await $.ajax({
+                url: `${host}/top25?start=${start}`,
+                success: res => {
+                    this.list = res.res
+                    this.total = res.total
+                    this.index = item
+                }
+            })
+        },
+        // 详情页
+        handleDetail(id) {
+            location.href = `detail.html?id=${id}&server=${host}`
+        }
+    }
+})
+</script>
+</body>
+</html>
