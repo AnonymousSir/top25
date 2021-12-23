@@ -7,6 +7,7 @@ npm install
 
 ## 启动后端服务器
 cd ./server
+
 nodemon ./app.js
 
 ## 前端页面
